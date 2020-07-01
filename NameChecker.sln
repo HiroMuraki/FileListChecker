@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30225.117
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NameChecker", "NameChecker.csproj", "{1DD2952A-8C4D-448A-A348-D6F250A45CED}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1DD2952A-8C4D-448A-A348-D6F250A45CED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1DD2952A-8C4D-448A-A348-D6F250A45CED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1DD2952A-8C4D-448A-A348-D6F250A45CED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1DD2952A-8C4D-448A-A348-D6F250A45CED}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {68F927F8-DF9D-40EF-A26F-C4AD62099124}
+	EndGlobalSection
+EndGlobal
