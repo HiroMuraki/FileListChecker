@@ -23,10 +23,10 @@ namespace NameChecker {
     public partial class MainWindow : Window {
         #region 字段
         readonly string defaultIniName = "NameCheckerSetting.ini";
+        readonly string folderName = "提取的文件";
         List<string[]> dataList;
         List<string> fileList;
         List<string> fullList;
-        string currentFolder;
         int dataElementCount;
         #endregion
         public MainWindow() {
@@ -66,13 +66,12 @@ namespace NameChecker {
             System.Windows.Forms.FolderBrowserDialog fbd = new System.Windows.Forms.FolderBrowserDialog();
             fbd.ShowDialog();
             if (fbd.SelectedPath != "" && fbd.SelectedPath != null) {
-                this.currentFolder = fbd.SelectedPath;
-                this.txtCurrentFolder.Text = currentFolder;
+                this.txtCurrentFolder.Text = fbd.SelectedPath;
             }
         }
         private void btnOpenCsv_Click(object sender, RoutedEventArgs e) {
             OpenFileDialog ofd = new OpenFileDialog();
-            ofd.InitialDirectory = currentFolder;
+            ofd.InitialDirectory = this.txtCurrentFolder.Text;
             ofd.Filter = "csv文件|*.csv";
             ofd.ShowDialog();
             if (ofd.FileName != null && ofd.FileName != "") {
@@ -90,6 +89,21 @@ namespace NameChecker {
                 $"NameFormat = \"{this.txtFileNameFormat.Text}\"";
             using (StreamWriter writer = new StreamWriter(defaultIniName)) {
                 writer.Write(iniFileContent);
+            }
+        }
+        private void btnGetFiles_Click(object sender, RoutedEventArgs e) {
+            GetDataList();
+            GetFileList();
+            GetFullList();
+            Directory.CreateDirectory(folderName);
+            string[] files = Directory.GetFiles(this.txtCurrentFolder.Text);
+            foreach (string file in files) {
+                string fileName = System.IO.Path.GetFileName(file);
+                if (IsContained(fileName.Split('.')[0], fullList)) {
+                    string sourceFile = file;
+                    string targetFile = $"{Directory.GetCurrentDirectory()}\\{folderName}\\{fileName}";
+                    File.Copy(sourceFile, targetFile, true);
+                }
             }
         }
     }
