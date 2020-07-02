@@ -139,7 +139,7 @@ namespace NameChecker {
                 string fileName = System.IO.Path.GetFileNameWithoutExtension(file);
                 if (IsContained(fileName, PlanedList)) {
                     string sourceFile = file;
-                    string targetFile = $"{Directory.GetCurrentDirectory()}\\{defaultGetFolderName}\\{fileName}";
+                    string targetFile = $"{Directory.GetCurrentDirectory()}\\{defaultGetFolderName}\\{System.IO.Path.GetFileName(file)}";
                     File.Copy(sourceFile, targetFile, true);
                 }
             }
@@ -201,16 +201,18 @@ namespace NameChecker {
         }
         private void GetCheckInformation() {
             int a = CharCount(CheckResultList, '\n');
-            int b = CharCount(CheckDataList, '\n');
+            int b = PlanedList.Count;
             this.lblCheckInformation.Content = $"{b - a}/{b}";
         }
         private void ReadCsvData(string filePath) {
             this.txtCheckList.Text = "";
             using (FileStream csvFile = new FileStream(filePath, FileMode.Open, FileAccess.Read)) {
                 CsvReader csvReader = new CsvReader(csvFile);
+                List<string> dataList = new List<string>();
                 foreach (string[] data in csvReader.ReadRows()) {
-                    CheckDataList += $"{string.Join(",", data)}\n";
+                    dataList.Add($"{string.Join(",", data)}");
                 }
+                CheckDataList = string.Join("\n", dataList);
             }
         }
     }

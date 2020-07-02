@@ -11,27 +11,33 @@ namespace NameChecker.MainCode {
             Normal,
             Strict
         }
-        static public string GetCheckName(string nameForamt, string[] data, StrictLevel strictLevel = StrictLevel.Strict) {
+        static public string GetCheckName(string nameFormat, string[] data, StrictLevel strictLevel = StrictLevel.Strict) {
+            //正则化数据
             Regex r = new Regex("[^\\\\]\\+");
             for (int i = 0; i < data.Length; i++) {
                 while (r.IsMatch(data[i])) {
                     data[i] = data[i].Replace("+", "\\+");
                 }
             }
+            //正则化文件名格式
+            while (r.IsMatch(nameFormat)) {
+                nameFormat = nameFormat.Replace("+", "\\+");
+            }
+            //占位符替换
             if (strictLevel == StrictLevel.Normal) {
                 for (int i = 0; i < data.Length; i++) {
-                    nameForamt = nameForamt.Replace($"[{i}]", $"[ -_+]*{data[i]}[ -_+]*");
+                    nameFormat = nameFormat.Replace($"[{i}]", $"[ -_+]*{data[i]}[ -_+]*");
                 }
             } else if (strictLevel == StrictLevel.Strict) {
                 for (int i = 0; i < data.Length; i++) {
-                    nameForamt = nameForamt.Replace($"[{i}]", $"{data[i]}");
+                    nameFormat = nameFormat.Replace($"[{i}]", $"{data[i]}");
                 }
-                nameForamt = $"^{nameForamt}$";
+                nameFormat = $"^{nameFormat}$";
             }
-            while (nameForamt.Contains("{}")) {
-                nameForamt = nameForamt.Replace("{}", "[\\s\\S]*");
+            while (nameFormat.Contains("{}")) {
+                nameFormat = nameFormat.Replace("{}", "[\\s\\S]*");
             }
-            return nameForamt;
+            return nameFormat;
         }
         static public string ClearRegexPattern(string regexString) {
             if (regexString.StartsWith("^")) {
