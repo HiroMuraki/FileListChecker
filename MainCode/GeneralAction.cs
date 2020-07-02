@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -7,22 +8,26 @@ using System.Threading.Tasks;
 
 namespace NameChecker.MainCode {
     class GeneralAction {
+        #region 
         public enum StrictLevel {
             Normal,
             Strict
         }
+        static readonly Regex seekPlus = new Regex("[^\\\\]\\+");
+        static readonly Regex seekParentheseL = new Regex("[^\\\\]\\(");
+        static readonly Regex seekParentheseR = new Regex("[^\\\\]\\)");
+        static readonly Regex seekBraceL = new Regex("[^\\\\]\\{");
+        static readonly Regex seekBraceR = new Regex("[^\\\\]\\}");
+        static readonly Regex seekBracketL = new Regex("[^\\\\]\\[");
+        static readonly Regex seekBracketR = new Regex("[^\\\\]\\]");
+        #endregion
         static public string GetCheckName(string nameFormat, string[] data, StrictLevel strictLevel = StrictLevel.Strict) {
             //正则化数据
-            Regex r = new Regex("[^\\\\]\\+");
             for (int i = 0; i < data.Length; i++) {
-                while (r.IsMatch(data[i])) {
-                    data[i] = data[i].Replace("+", "\\+");
-                }
+                data[i] = Regexilize(data[i]);
             }
             //正则化文件名格式
-            while (r.IsMatch(nameFormat)) {
-                nameFormat = nameFormat.Replace("+", "\\+");
-            }
+            nameFormat = Regexilize2(nameFormat);
             //占位符替换
             if (strictLevel == StrictLevel.Normal) {
                 for (int i = 0; i < data.Length; i++) {
@@ -52,8 +57,8 @@ namespace NameChecker.MainCode {
             while (regexString.Contains("[\\s\\S]*")) {
                 regexString = regexString.Replace("[\\s\\S]*", "XXX");
             }
-            while (regexString.Contains("\\+")) {
-                regexString = regexString.Replace("\\+", "+");
+            while (regexString.Contains("\\")) {
+                regexString = regexString.Replace("\\", "");
             }
             return regexString;
         }
@@ -81,6 +86,36 @@ namespace NameChecker.MainCode {
                 }
             }
             return false;
+        }
+        static public string Regexilize(string sourceString) {
+            while (seekPlus.IsMatch(sourceString)) {
+                sourceString = sourceString.Replace("+", "\\+");
+            }
+            while (seekParentheseL.IsMatch(sourceString)) {
+                sourceString = sourceString.Replace("(", "\\(");
+            }
+            while (seekParentheseR.IsMatch(sourceString)) {
+                sourceString = sourceString.Replace(")", "\\)");
+            }
+            while (seekBraceL.IsMatch(sourceString)) {
+                sourceString = sourceString.Replace("{", "\\{");
+            }
+            while (seekBraceR.IsMatch(sourceString)) {
+                sourceString = sourceString.Replace("}", "\\{");
+            }
+            while (seekBracketL.IsMatch(sourceString)) {
+                sourceString = sourceString.Replace("[", "\\[");
+            }
+            while (seekBracketR.IsMatch(sourceString)) {
+                sourceString = sourceString.Replace("]", "\\]");
+            }
+            return sourceString;
+        }
+        static public string Regexilize2(string sourceString) {
+            while (seekPlus.IsMatch(sourceString)) {
+                sourceString = sourceString.Replace("+", "\\+");
+            }
+            return sourceString;
         }
     }
 }
