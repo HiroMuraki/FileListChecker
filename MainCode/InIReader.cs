@@ -7,10 +7,11 @@ using System.Threading.Tasks;
 
 namespace NameChecker {
     static class InIReader {
-        static readonly Regex[] seekSetting = new Regex[3] {
-            new Regex("Path[ ]{1,}=[ ]{1,}"),
-            new Regex("CsvFile[ ]{1,}=[ ]{1,}"),
-            new Regex("NameFormat[ ]{1,}=[ ]{1,}")
+        static readonly Regex[] seekSetting = new Regex[4] {
+            new Regex("Path[ ]*=[ ]*"),
+            new Regex("CsvFile[ ]*=[ ]*"),
+            new Regex("NameFormat[ ]*=[ ]*"),
+            new Regex("IsStrictCheck[ ]*=[ ]*")
         };
         static public List<string> ReadInI(string filePath) {
             List<string> settings = new List<string>();
@@ -20,7 +21,7 @@ namespace NameChecker {
                     if (currentLine.StartsWith("#")) {
                         continue;
                     }
-                    foreach (var seeker in seekSetting) {
+                    foreach (Regex seeker in seekSetting) {
                         if (seeker.IsMatch(currentLine)) {
                             int startPos = seeker.Match(currentLine).Length;
                             settings.Add(currentLine.Substring(startPos).Trim('"'));

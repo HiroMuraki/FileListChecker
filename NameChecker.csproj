@@ -72,6 +72,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="MainCode\CsvOperate.cs" />
+    <Compile Include="MainCode\GeneralAction.cs" />
     <Compile Include="MainCode\InIReader.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
