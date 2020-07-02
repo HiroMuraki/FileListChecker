@@ -71,7 +71,7 @@
                              Style="{StaticResource GeneralTextBox}"/>
                 <Border Background="{StaticResource LightWhite}" Grid.Column="2">
                     <CheckBox VerticalAlignment="Center" HorizontalAlignment="Center"
-                              Content="严格匹配" x:Name="IsStrictLevel"/>
+                              Content="严格匹配" x:Name="chkIsStrictCheck"/>
                 </Border>
                 <Label x:Name="lblCheckInformation" Content="0/0" Grid.Column="3" 
                              Style="{StaticResource GeneralLabel}"/>

@@ -12,6 +12,12 @@ namespace NameChecker.MainCode {
             Strict
         }
         static public string GetCheckName(string nameForamt, string[] data, StrictLevel strictLevel = StrictLevel.Strict) {
+            Regex r = new Regex("[^\\\\]\\+");
+            for (int i = 0; i < data.Length; i++) {
+                while (r.IsMatch(data[i])) {
+                    data[i] = data[i].Replace("+", "\\+");
+                }
+            }
             if (strictLevel == StrictLevel.Normal) {
                 for (int i = 0; i < data.Length; i++) {
                     nameForamt = nameForamt.Replace($"[{i}]", $"[ -_+]*{data[i]}[ -_+]*");
@@ -20,6 +26,7 @@ namespace NameChecker.MainCode {
                 for (int i = 0; i < data.Length; i++) {
                     nameForamt = nameForamt.Replace($"[{i}]", $"{data[i]}");
                 }
+                nameForamt = $"^{nameForamt}$";
             }
             while (nameForamt.Contains("{}")) {
                 nameForamt = nameForamt.Replace("{}", "[\\s\\S]*");
@@ -27,11 +34,20 @@ namespace NameChecker.MainCode {
             return nameForamt;
         }
         static public string ClearRegexPattern(string regexString) {
+            if (regexString.StartsWith("^")) {
+                regexString = regexString.Replace("^", "");
+            }
+            if (regexString.EndsWith("$")) {
+                regexString = regexString.Replace("$", "");
+            }
             while (regexString.Contains("[ -_+]*")) {
                 regexString = regexString.Replace("[ -_+]*", "");
             }
             while (regexString.Contains("[\\s\\S]*")) {
                 regexString = regexString.Replace("[\\s\\S]*", "XXX");
+            }
+            while (regexString.Contains("\\+")) {
+                regexString = regexString.Replace("\\+", "+");
             }
             return regexString;
         }
@@ -52,10 +68,8 @@ namespace NameChecker.MainCode {
             }
             return false;
         }
-        static public bool IsContained(string checkItem, List<string> fullList) {
-            Regex seeker;
-            foreach (string seekerPattern in fullList) {
-                seeker = new Regex(seekerPattern);
+        static public bool IsContained(string checkItem, List<Regex> fullList) {
+            foreach (Regex seeker in fullList) {
                 if (seeker.IsMatch(checkItem)) {
                     return true;
                 }

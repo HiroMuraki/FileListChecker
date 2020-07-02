@@ -25,6 +25,7 @@ namespace NameChecker {
         #region 字段
         readonly string defaultIniName = "NameCheckerSetting.ini";
         readonly string defaultGetFolderName = "提取的文件";
+        readonly string defaultCsvFile = "NameID.csv";
         public string CurrentWorkDirectory {
             get {
                 return this.txtCurrentFolder.Text;
@@ -49,10 +50,33 @@ namespace NameChecker {
                 this.txtFileNameFormat.Text = value;
             }
         }
+        public string CheckDataList {
+            get {
+                return this.txtCheckList.Text;
+            }
+            set {
+                this.txtCheckList.Text = value;
+            }
+        }
+        public string CheckResultList {
+            get {
+                return this.txtCheckResultList.Text;
+            }
+            set {
+                this.txtCheckResultList.Text = value;
+            }
+        }
+        public bool? StrictCheck {
+            get {
+                return this.chkIsStrictCheck.IsChecked;
+            }
+            set {
+                this.chkIsStrictCheck.IsChecked = value;
+            }
+        }
         List<string[]> dataList;
         List<string> fileList;
-        List<string> fullList;
-        int dataElementCount;
+        List<Regex> PlanedList;
         #endregion
         public MainWindow() {
             InitializeComponent();
@@ -74,13 +98,13 @@ namespace NameChecker {
                     CurrentNameFormat = settings[2];
                     //是否严格匹配
                     bool.TryParse(settings[3], out bool isChecked);
-                    this.IsStrictLevel.IsChecked = isChecked;
+                    StrictCheck = isChecked;
                 }
             } else {
                 this.txtCurrentFolder.Text = Directory.GetCurrentDirectory();
-                if (File.Exists("NameID.csv")) {
-                    ReadCsvData("NameID.csv");
-                    this.txtCurrentCsvPath.Text = $"{this.txtCurrentFolder.Text}\\NameID.csv";
+                if (File.Exists(defaultCsvFile)) {
+                    ReadCsvData(defaultCsvFile);
+                    CurrentCsvFile = $"{CurrentWorkDirectory}\\{defaultCsvFile}";
                 }
             }
         }
@@ -101,6 +125,26 @@ namespace NameChecker {
                 CurrentCsvFile = ofd.FileName;
             }
         }
+        private void btnCheck_Click(object sender, RoutedEventArgs e) {
+            GetCheckResult();
+            GetCheckInformation();
+        }
+        private void btnGetFiles_Click(object sender, RoutedEventArgs e) {
+            GetDataList();
+            GetFileList();
+            GetPlanedList();
+            Directory.CreateDirectory(defaultGetFolderName);
+            string[] files = Directory.GetFiles(CurrentWorkDirectory);
+            foreach (string file in files) {
+                string fileName = System.IO.Path.GetFileNameWithoutExtension(file);
+                if (IsContained(fileName, PlanedList)) {
+                    string sourceFile = file;
+                    string targetFile = $"{Directory.GetCurrentDirectory()}\\{defaultGetFolderName}\\{fileName}";
+                    File.Copy(sourceFile, targetFile, true);
+                }
+            }
+            GetCheckInformation();
+        }
         private void Window_Closed(object sender, EventArgs e) {
             string iniFileContent =
                 "[DefaultPath]\n" +
@@ -110,79 +154,54 @@ namespace NameChecker {
                 "[DefaultNameFormat]\n" +
                 $"NameFormat = \"{CurrentNameFormat}\"\n\n" +
                 "[IsStrictCheck]\n" +
-                $"IsStrictCheck = \"{this.IsStrictLevel.IsChecked}\"";
+                $"IsStrictCheck = \"{StrictCheck}\"";
             using (StreamWriter writer = new StreamWriter(defaultIniName)) {
                 writer.Write(iniFileContent);
             }
         }
-        private void btnCheck_Click(object sender, RoutedEventArgs e) {
-            GetCheckResult();
-            GetCheckInformation();
-        }
-        private void btnGetFiles_Click(object sender, RoutedEventArgs e) {
-            GetDataList();
-            GetFileList();
-            GetFullList();
-            Directory.CreateDirectory(defaultGetFolderName);
-            string[] files = Directory.GetFiles(CurrentWorkDirectory);
-            foreach (string file in files) {
-                string fileName = System.IO.Path.GetFileName(file);
-                if (IsContained(fileName.Split('.')[0], fullList)) {
-                    string sourceFile = file;
-                    string targetFile = $"{Directory.GetCurrentDirectory()}\\{defaultGetFolderName}\\{fileName}";
-                    File.Copy(sourceFile, targetFile, true);
-                }
-            }
-            GetCheckInformation();
-        }
     }
 
     public partial class MainWindow : Window {
+        private void GetPlanedList() {
+            this.PlanedList = new List<Regex>();
+            foreach (string[] data in dataList) {
+                string possibleFileName = CurrentNameFormat;
+                if (StrictCheck == true) {
+                    possibleFileName = GetCheckName(possibleFileName, data, StrictLevel.Strict);
+                } else {
+                    possibleFileName = GetCheckName(possibleFileName, data, StrictLevel.Normal);
+                }
+                PlanedList.Add(new Regex(possibleFileName));
+            }
+        }
         private void GetDataList() {
             this.dataList = new List<string[]>();
-            dataElementCount = this.txtCheckList.Text.Split('\n')[0].Split(',').Length;
-            foreach (string[] data in CsvReader.ReadFromString(this.txtCheckList.Text)) {
-                if (data.Length >= dataElementCount) {
-                    this.dataList.Add(data);
-                }
+            foreach (string[] data in CsvReader.ReadFromString(CheckDataList)) {
+                this.dataList.Add(data);
             }
         }
         private void GetFileList() {
             this.fileList = new List<string>();
             string[] fileNames = Directory.GetFiles(CurrentWorkDirectory);
             foreach (string fileName in fileNames) {
-                string name = System.IO.Path.GetFileName(fileName).Split('.')[0];
+                string name = System.IO.Path.GetFileNameWithoutExtension(fileName);
                 fileList.Add(name);
-            }
-        }
-        private void GetFullList() {
-            this.fullList = new List<string>();
-            foreach (string[] data in dataList) {
-                string possibleFileName = CurrentNameFormat;
-                if (this.IsStrictLevel.IsChecked == true) {
-                    possibleFileName = GetCheckName(possibleFileName, data, StrictLevel.Strict);
-                } else {
-                    possibleFileName = GetCheckName(possibleFileName, data, StrictLevel.Normal);
-                }
-                this.fullList.Add(possibleFileName);
             }
         }
         private void GetCheckResult() {
             GetDataList();
             GetFileList();
-            GetFullList();
-            this.txtCheckResultList.Text = "";
-            Regex seeker;
-            foreach (string possibleFile in this.fullList) {
-                seeker = new Regex(possibleFile);
-                if (!IsContained(seeker, this.fileList)) {
-                    this.txtCheckResultList.Text += $"{ClearRegexPattern(possibleFile)}\n";
+            GetPlanedList();
+            CheckResultList = "";
+            foreach (Regex possibleFileName in this.PlanedList) {
+                if (!IsContained(possibleFileName, this.fileList)) {
+                    CheckResultList += $"{ClearRegexPattern(possibleFileName.ToString())}\n";
                 }
             }
         }
         private void GetCheckInformation() {
-            int a = CharCount(this.txtCheckResultList.Text, '\n');
-            int b = CharCount(this.txtCheckList.Text, '\n');
+            int a = CharCount(CheckResultList, '\n');
+            int b = CharCount(CheckDataList, '\n');
             this.lblCheckInformation.Content = $"{b - a}/{b}";
         }
         private void ReadCsvData(string filePath) {
@@ -190,7 +209,7 @@ namespace NameChecker {
             using (FileStream csvFile = new FileStream(filePath, FileMode.Open, FileAccess.Read)) {
                 CsvReader csvReader = new CsvReader(csvFile);
                 foreach (string[] data in csvReader.ReadRows()) {
-                    this.txtCheckList.Text += $"{string.Join(",", data)}\n";
+                    CheckDataList += $"{string.Join(",", data)}\n";
                 }
             }
         }
