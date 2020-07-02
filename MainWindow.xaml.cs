@@ -195,7 +195,7 @@ namespace NameChecker {
             CheckResultList = "";
             foreach (Regex possibleFileName in this.PlanedList) {
                 if (!IsContained(possibleFileName, this.fileList)) {
-                    CheckResultList += $"{ClearRegexPattern(possibleFileName.ToString())}\n";
+                    CheckResultList += $"{ClearRegexilize(possibleFileName.ToString())}\n";
                 }
             }
         }

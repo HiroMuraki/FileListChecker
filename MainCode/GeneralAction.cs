@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace NameChecker.MainCode {
     class GeneralAction {
@@ -13,13 +14,9 @@ namespace NameChecker.MainCode {
             Normal,
             Strict
         }
-        static readonly Regex seekPlus = new Regex("[^\\\\]\\+");
-        static readonly Regex seekParentheseL = new Regex("[^\\\\]\\(");
-        static readonly Regex seekParentheseR = new Regex("[^\\\\]\\)");
-        static readonly Regex seekBraceL = new Regex("[^\\\\]\\{");
-        static readonly Regex seekBraceR = new Regex("[^\\\\]\\}");
-        static readonly Regex seekBracketL = new Regex("[^\\\\]\\[");
-        static readonly Regex seekBracketR = new Regex("[^\\\\]\\]");
+        static readonly Regex seekSpecialChar = new Regex("[^\\\\][\\$\\(\\)\\*\\+\\.\\[\\]\\?\\^\\{\\}\\|]");
+        static readonly Regex seekSpecialCharStart = new Regex("^[\\$\\(\\)\\*\\+\\.\\[\\]\\?\\^\\{\\}\\|]");
+        static readonly Regex seekSpecialCharTrans = new Regex("[\\\\][\\$\\(\\)\\*\\+\\.\\[\\]\\?\\^\\{\\}\\|]");
         #endregion
         static public string GetCheckName(string nameFormat, string[] data, StrictLevel strictLevel = StrictLevel.Strict) {
             //正则化数据
@@ -27,24 +24,36 @@ namespace NameChecker.MainCode {
                 data[i] = Regexilize(data[i]);
             }
             //正则化文件名格式
-            nameFormat = Regexilize2(nameFormat);
+            nameFormat = Regexilize(nameFormat);
             //占位符替换
+            while (nameFormat.Contains("\\{\\}")) {
+                nameFormat = nameFormat.Replace("\\{\\}", "[\\s\\S]*");
+            }
             if (strictLevel == StrictLevel.Normal) {
                 for (int i = 0; i < data.Length; i++) {
-                    nameFormat = nameFormat.Replace($"[{i}]", $"[ -_+]*{data[i]}[ -_+]*");
+                    nameFormat = nameFormat.Replace($"\\[{i}\\]", $"[ -_+]*{data[i]}[ -_+]*");
                 }
             } else if (strictLevel == StrictLevel.Strict) {
                 for (int i = 0; i < data.Length; i++) {
-                    nameFormat = nameFormat.Replace($"[{i}]", $"{data[i]}");
+                    nameFormat = nameFormat.Replace($"\\[{i}\\]", $"{data[i]}");
                 }
                 nameFormat = $"^{nameFormat}$";
             }
-            while (nameFormat.Contains("{}")) {
-                nameFormat = nameFormat.Replace("{}", "[\\s\\S]*");
-            }
             return nameFormat;
         }
-        static public string ClearRegexPattern(string regexString) {
+        static public string Regexilize(string sourceString) {
+            string par = seekSpecialChar.Match(sourceString).ToString();
+            while (par != null && par != "") {
+                sourceString = sourceString.Replace($"{par[1]}", $"\\{par[1]}");
+                par = seekSpecialChar.Match(sourceString).ToString();
+            }
+            string parStart = seekSpecialCharStart.Match(sourceString).ToString();
+            if (parStart != null && parStart != "") {
+                sourceString = seekSpecialCharStart.Replace(sourceString, $"\\{parStart}");
+            }
+            return sourceString;
+        }
+        static public string ClearRegexilize(string regexString) {
             if (regexString.StartsWith("^")) {
                 regexString = regexString.Replace("^", "");
             }
@@ -53,12 +62,15 @@ namespace NameChecker.MainCode {
             }
             while (regexString.Contains("[ -_+]*")) {
                 regexString = regexString.Replace("[ -_+]*", "");
+
             }
             while (regexString.Contains("[\\s\\S]*")) {
                 regexString = regexString.Replace("[\\s\\S]*", "XXX");
             }
-            while (regexString.Contains("\\")) {
-                regexString = regexString.Replace("\\", "");
+            string par = seekSpecialCharTrans.Match(regexString).ToString();
+            while (par != null && par != "") {
+                regexString = regexString.Replace(par, $"{par[1]}");
+                par = seekSpecialCharTrans.Match(regexString).ToString();
             }
             return regexString;
         }
@@ -87,35 +99,6 @@ namespace NameChecker.MainCode {
             }
             return false;
         }
-        static public string Regexilize(string sourceString) {
-            while (seekPlus.IsMatch(sourceString)) {
-                sourceString = sourceString.Replace("+", "\\+");
-            }
-            while (seekParentheseL.IsMatch(sourceString)) {
-                sourceString = sourceString.Replace("(", "\\(");
-            }
-            while (seekParentheseR.IsMatch(sourceString)) {
-                sourceString = sourceString.Replace(")", "\\)");
-            }
-            while (seekBraceL.IsMatch(sourceString)) {
-                sourceString = sourceString.Replace("{", "\\{");
-            }
-            while (seekBraceR.IsMatch(sourceString)) {
-                sourceString = sourceString.Replace("}", "\\{");
-            }
-            while (seekBracketL.IsMatch(sourceString)) {
-                sourceString = sourceString.Replace("[", "\\[");
-            }
-            while (seekBracketR.IsMatch(sourceString)) {
-                sourceString = sourceString.Replace("]", "\\]");
-            }
-            return sourceString;
-        }
-        static public string Regexilize2(string sourceString) {
-            while (seekPlus.IsMatch(sourceString)) {
-                sourceString = sourceString.Replace("+", "\\+");
-            }
-            return sourceString;
-        }
+        
     }
 }
